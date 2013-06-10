@@ -1,5 +1,7 @@
 import os, commands, sys, numpy
 
+__version__ = '0.1dev'
+
 try:
     import asciidata
 except ImportError:
@@ -127,41 +129,3 @@ class pyx:
 	    print 'Cannot set CATALOG_TYPE to ASCII_HEAD'
 
 	    return {}
-
-
-def example( ):
-    print 'Example simple PyX extraction.'
-    fn = raw_input('Please enter .fits image file name: ')
-    
-    T = pyx()  ### Initialize a pyx object 'T'
-
-    ### Default params are X_IMAGE Y_IMAGE MAG_AUTO
-    ### and are kept in T.params
-    ### Lets add another...
-    T.params.append( 'FLAGS' )
-
-    ## lets print all the params:
-    print 'Params to generate: %s'%( ' '.join( T.params ) )
-    
-
-    ### All the configuration params are kept in dictionary:
-    ### T.options
-    ### Lets change a couple of them
-    T.options['DETECT_THRESH']  = 5.0
-    T.options['DETECT_MINAREA'] = 3
-
-    ### Let's see what the second one of these means:
-    print T.options_description['DETECT_MINAREA']
-
-    ### Happy? Alright! Lets run it. Pass .getcat( ) a .fits filename.
-    T.getcat( fn )
-
-    ### self.catalog is a python dictionary containing keywords of params
-    ### and numpy arrays of extracted data.
-    print T.catalog['FLAGS']
-
-    return T.catalog
-
-
-if __name__ == "__main__":
-    catalog = example()
