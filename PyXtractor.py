@@ -1,4 +1,10 @@
-import os, commands, sys, asciidata, numpy
+import os, commands, sys, numpy
+
+try:
+    import asciidata
+except ImportError:
+    print 'Did not find asciidata; falling back on slow parsing.'
+    pass
 
 class pyx:
     def __init__( self ):
@@ -8,7 +14,6 @@ class pyx:
         self.default_conv   = 'CONV NORM\n1 2 1\n2 4 2\n1 2 1\n' ### a hard-coded filter to fall back on
 
         self.options = {}
-
 	self.options_description = {}
 
         for k in self.default_config:
@@ -80,11 +85,40 @@ class pyx:
     def readcat( self ):
 
 	data_dict = {}
-	if self.options['CATALOG_TYPE'] == 'ASCII_HEAD':
-	    CAT = asciidata.open(self.options['CATALOG_NAME'])
 
-	    for k in self.params:
-		data_dict[k] = numpy.asarray( CAT[k] )
+	### Lets see which packages we need to fall back on.
+	try:
+	    __import__('asciidata')
+	except ImportError:
+	    do_read = True
+	else:
+	    do_read = False
+
+	if self.options['CATALOG_TYPE'] == 'ASCII_HEAD':
+
+	    if not do_read:
+		CAT = asciidata.open(self.options['CATALOG_NAME'])
+
+		for k in self.params:
+		    data_dict[k] = numpy.asarray( CAT[k] )
+
+	    else:
+		FILE = open(self.options['CATALOG_NAME'])
+		dat  = FILE.readlines()
+		FILE.close()
+
+		for k in self.params:
+		    data_dict[k] = []
+
+		for k in dat:
+		    if k[0] == '#':
+			continue
+		    k1 = k.strip().split()
+		    for j in range(0,len(self.params)):
+			data_dict[ self.params[j] ].append( k1[j] )
+
+		for k in self.params: ### turn the python arrays into numpy arrays.
+		    data_dict[k] = numpy.asarray( data_dict[k])
 
 	    return data_dict
 
