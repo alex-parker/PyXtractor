@@ -1,0 +1,28 @@
+PyXtractor: A simple python interface for Source Extractor.
+
+The pyx class: generates an object that allows you to interact with Source Extractor
+    in a straightforward way.
+    
+    On invocation, pyx reads in the default configuration and parameter files for Source Extractor.
+
+    Those files are then parsed as python dictionaries, giving you access to all of their keys.
+
+    Once you have modified any of the config or param dictionaries to your liking, you can
+    tell pyx to run Source Extractor by calling pyx.getcat( [ 'list', 'of', 'image', 'names' ] )
+
+    Temporary configuration and parameter files will be written, Source Extractor will run,
+    and the resulting catalogs will be read in to further python dictionaries inside pyx.catalog
+
+    eg, for image foo.fits and bar.fits
+
+    from pyxtractor import pyx
+    T = pyx()
+    T.params = [ 'X_IMAGE', 'Y_IMAGE', 'MAG_APER' ]   <-- this will tell pyx to read these three params.
+    T.options[ 'DETECT_THRESH' ] = 10                 <-- only detect sources over 10 sigma.
+    T.getcat( ['foo.fits', 'bar.fits'] )              <-- Source Extractor runs!
+    T.catalog[ 'Ifoo.fits' ]
+         {'X_IMAGE': array([ 1518.199,  1289.258,  1127.766, ...,  1234.537,   292.327,  1961.47 ]), 
+ 	  'Y_IMAGE': array([  900.927,  1005.062,  1010.344, ...,  3441.268,  3417.599, 3443.261]), 
+	  'MAG_APER': array([-18.7066, -17.1244, -14.3642, ..., -13.3924, -13.93  , -11.2913])}
+    Note that in pyx.catalog, all image name keys have ‘I’ pre-pended on them. This is to avoid any
+    issues with non-alpha characters leading in python dictionary keys.
