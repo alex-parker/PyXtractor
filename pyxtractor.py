@@ -122,7 +122,7 @@ class pyx:
 
         if not os.path.isfile( self.options[ 'FILTER_NAME' ] ):
             #if self.options[ 'FILTER' ] == 'Y':
-            print 'Requested filter not found - using defaultPyX.conv' 
+            #print 'Requested filter not found - using defaultPyX.conv' 
             self.options[ 'FILTER_NAME' ] = 'defaultPyX.conv'
 
         if not os.path.isfile('defaultPyX.conv'):
