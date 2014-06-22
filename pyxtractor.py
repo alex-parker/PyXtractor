@@ -1,6 +1,6 @@
 import os, commands, sys, numpy, tempfile
 
-__version__ = '0.2'
+__version__ = '0.3'
 
 ### Quick check to ensure that Source Extractor is installed.
 S_version = commands.getstatusoutput('sex -v')
@@ -47,8 +47,8 @@ class pyx:
     '''
 
     def __init__( self ):
-        self.default_config = commands.getoutput('sex -dd')[0].split('\n')  ### get a default config file
-        param_list0         = commands.getoutput('sex -dp')[0].split('\n') ### get a full list of params
+        self.default_config = commands.getoutput('sex -dd').split('\n')  ### get a default config file
+        param_list0         = commands.getoutput('sex -dp').split('\n') ### get a full list of params
 
         self.default_conv   = 'CONV NORM\n1 2 1\n2 4 2\n1 2 1\n' ### a hard-coded filter to fall back on
 
@@ -82,15 +82,18 @@ class pyx:
 
         self._param_list = []
         for k in param_list0:
-            k = k[1:].split()[0]
-            self._param_list.append( k )
-
+            try:
+                k = k[1:].split()[0]
+                self._param_list.append( k )
+            except:
+                continue
+                
         self.params = [ 'X_IMAGE', 'Y_IMAGE', 'MAG_AUTO' ]
 
-        catalog_file = tempfil.mkstemp(suffix='.cat', prefix='tmpPyX.', dir='./')
+        catalog_file = tempfile.mkstemp(suffix='.cat', prefix='tmpPyX.', dir='./')[1]
         self.options['CATALOG_NAME'] = catalog_file
 
-        param_file = tempfil.mkstemp(suffix='.param', prefix='tmpPyX.', dir='./')
+        param_file = tempfile.mkstemp(suffix='.param', prefix='tmpPyX.', dir='./')[1]
         self.options[ 'PARAMETERS_NAME' ] = param_file
 
         self.tmpfiles = [catalog_file, param_file]
@@ -102,56 +105,59 @@ class pyx:
 
         ### lets do some checks:
         for k in self.params:
-            if self._param_list.count( str( k ) ) == 0:
+            if str(k) not in self._param_list:
                 print 'Param %s not a Source Extractor parameter - quitting.'%( str( k ) )
                 sys.exit(1)
 
+        #print self.options[ 'PARAMETERS_NAME' ]
+                
         FILE = open( self.options[ 'PARAMETERS_NAME' ], 'w')
         for k in self.params:
             FILE.write('%s\n'%( k.strip() ) )
         FILE.close()
 
-        config_file = tempfil.mkstemp(suffix='.config', prefix='tmpPyX.', dir='./')
+        config_file = tempfile.mkstemp(suffix='.config', prefix='tmpPyX.', dir='./')[1]
 
         self.tmpfiles.append( config_file )
 
-        FILE = open( config_file, 'w')
-        for k in self.options:
-            FILE.write('%s %s\n'%( k, str(self.options[k]).strip() ) )
-        FILE.close()
-
         if not os.path.isfile( self.options[ 'FILTER_NAME' ] ):
-            if self.options[ 'FILTER' ] == 'Y':
-                print 'Requested filter not found - using defaultPyX.conv' 
-        self.options[ 'FILTER_NAME' ] = 'defaultPyX.conv'
+            #if self.options[ 'FILTER' ] == 'Y':
+            print 'Requested filter not found - using defaultPyX.conv' 
+            self.options[ 'FILTER_NAME' ] = 'defaultPyX.conv'
 
         if not os.path.isfile('defaultPyX.conv'):
             FILE = open('defaultPyX.conv', 'w')
             FILE.write( self.default_conv )
             FILE.close()
+            
+        FILE = open( config_file, 'w')
+        for k in self.options:
+            FILE.write('%s %s\n'%( k, str(self.options[k]).strip() ) )
+        FILE.close()
 
+            
         if type(imageV) == type(str()):
             ### you passed a single imagename, therefore:
-            sysout = commands.getstatusoutput('sex -c PyX.config %s'%(imageV) )
+            sysout = commands.getstatusoutput('sex -c %s %s'%(config_file, imageV) )
 
             if sysout[0] != 0:
                 print 'Warning: Command sex -c PyX.config %s raised the following error:'%(image)
                 print sysout
 
-            self.catalog[ 'I%s'%(imageV) ] = self.readcat()
+            self.catalog[ '%s'%(imageV) ] = self.readcat()
 
 
         else:
             ### imageV had better be an iterable object.
             for image in imageV:
 
-                sysout = commands.getstatusoutput('sex -c PyX.config %s'%(image) )
+                sysout = commands.getstatusoutput('sex -c %s %s'%(config_file, image) )
 
                 if sysout[0] != 0:
                     print 'Warning: Command sex -c PyX.config %s raised the following error:'%(image)
                     print sysout
 
-                self.catalog[ 'I%s'%(image) ] = self.readcat()
+                self.catalog[ '%s'%(image) ] = self.readcat()
 
 
     def readcat( self ):
